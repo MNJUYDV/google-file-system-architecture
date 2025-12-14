@@ -21,7 +21,7 @@ class GFSMaster:
         
         # Chunkserver heartbeats
         self.last_heartbeat: Dict[str, float] = {}
-        self.running = True
+        self.monitoring_active = True
         
         # Start heartbeat monitor
         self.start_heartbeat_monitor()
@@ -146,7 +146,7 @@ class GFSMaster:
     
     def _monitor_chunkservers(self):
         """Monitor chunkserver health"""
-        while self.running:
+        while self.monitoring_active:
             time.sleep(HEARTBEAT_INTERVAL)
             with self.lock:
                 current_time = time.time()
@@ -162,4 +162,4 @@ class GFSMaster:
     
     def shutdown(self):
         """Shutdown the master"""
-        self.running = False
+        self.monitoring_active = False
