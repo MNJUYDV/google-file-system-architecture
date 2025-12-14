@@ -19,7 +19,7 @@ class GFSChunkserver:
         self.master.register_chunkserver(self.chunkserver_id, list(self.chunks.keys()))
         
         # Initialize state
-        self.monitoring_active = True
+        self.heartbeat_monitoring_active = True
         
         # Start heartbeat
         self.start_heartbeat()
@@ -31,7 +31,7 @@ class GFSChunkserver:
     
     def _send_heartbeats(self):
         """Send periodic heartbeats to master"""
-        while self.monitoring_active:
+        while self.heartbeat_monitoring_active:
             self.master.heartbeat(self.chunkserver_id)
             time.sleep(HEARTBEAT_INTERVAL)
     
@@ -74,4 +74,4 @@ class GFSChunkserver:
     
     def shutdown(self):
         """Shutdown the chunkserver"""
-        self.monitoring_active = False
+        self.heartbeat_monitoring_active = False
