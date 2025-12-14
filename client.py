@@ -25,7 +25,7 @@ class GFSClient:
             print(f"[Client] Failed to allocate chunk for {filename}")
             return False
         
-        chunk_handle = chunk_info['chunk_handle']
+        chunk_id = chunk_info['chunk_id']
         primary_id = chunk_info['primary']
         locations = chunk_info['locations']
         version = chunk_info['version']
@@ -33,7 +33,7 @@ class GFSClient:
         # Create chunk on all replicas
         for cs_id in locations:
             if cs_id in self.chunkservers:
-                self.chunkservers[cs_id].create_chunk(chunk_handle, version)
+                self.chunkservers[cs_id].create_chunk(chunk_id, version)
         
         # Get primary chunkserver
         primary = self.chunkservers.get(primary_id)
@@ -45,13 +45,13 @@ class GFSClient:
         offset = 0  # New chunk starts at 0
         
         # Primary writes data
-        if not primary.append_data(chunk_handle, data, offset):
+        if not primary.append_data(chunk_id, data, offset):
             return False
         
         # Replicate to secondaries
         for cs_id in locations:
             if cs_id != primary_id and cs_id in self.chunkservers:
-                self.chunkservers[cs_id].append_data(chunk_handle, data, offset)
+                self.chunkservers[cs_id].append_data(chunk_id, data, offset)
         
         print(f"[Client] Successfully appended {len(data)} bytes to {filename}")
         return True
@@ -72,13 +72,13 @@ class GFSClient:
             if not chunk_info:
                 continue
             
-            chunk_handle = chunk_info['chunk_handle']
+            chunk_id = chunk_info['chunk_id']
             locations = chunk_info['locations']
             
             # Try to read from any replica
             for cs_id in locations:
                 if cs_id in self.chunkservers:
-                    data = self.chunkservers[cs_id].read_data(chunk_handle, 0, CHUNK_SIZE)
+                    data = self.chunkservers[cs_id].read_data(chunk_id, 0, CHUNK_SIZE)
                     if data:
                         result.extend(data)
                         break

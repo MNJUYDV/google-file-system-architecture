@@ -12,8 +12,8 @@ class GFSChunkserver:
     def __init__(self, chunkserver_id: str, master: GFSMaster):
         self.chunkserver_id = chunkserver_id
         self.master = master
-        self.chunks: Dict[str, bytearray] = {}  # chunk_handle -> data
-        self.chunk_versions: Dict[str, int] = {}  # chunk_handle -> version
+        self.chunks: Dict[str, bytearray] = {}  # chunk_id -> data
+        self.chunk_versions: Dict[str, int] = {}  # chunk_id -> version
         self.lock = threading.RLock()
         
         # Register with master
@@ -30,20 +30,20 @@ class GFSChunkserver:
             self.master.heartbeat(self.chunkserver_id)
             time.sleep(HEARTBEAT_INTERVAL)
     
-    def create_chunk(self, chunk_handle: str, version: int):
+    def create_chunk(self, chunk_id: str, version: int):
         """Create a new chunk"""
         with self.lock:
-            self.chunks[chunk_handle] = bytearray()
-            self.chunk_versions[chunk_handle] = version
-            print(f"[{self.chunkserver_id}] Created chunk: {chunk_handle}")
+            self.chunks[chunk_id] = bytearray()
+            self.chunk_versions[chunk_id] = version
+            print(f"[{self.chunkserver_id}] Created chunk: {chunk_id}")
     
-    def append_data(self, chunk_handle: str, data: bytes, offset: int) -> bool:
+    def append_data(self, chunk_id: str, data: bytes, offset: int) -> bool:
         """Append data to a chunk at specified offset"""
         with self.lock:
-            if chunk_handle not in self.chunks:
+            if chunk_id not in self.chunks:
                 return False
             
-            chunk = self.chunks[chunk_handle]
+            chunk = self.chunks[chunk_id]
             
             # Extend chunk if necessary
             if offset > len(chunk):
@@ -55,16 +55,16 @@ class GFSChunkserver:
             else:
                 chunk[offset:offset+len(data)] = data
             
-            print(f"[{self.chunkserver_id}] Appended {len(data)} bytes to {chunk_handle} at offset {offset}")
+            print(f"[{self.chunkserver_id}] Appended {len(data)} bytes to {chunk_id} at offset {offset}")
             return True
     
-    def read_data(self, chunk_handle: str, offset: int, length: int) -> Optional[bytes]:
+    def read_data(self, chunk_id: str, offset: int, length: int) -> Optional[bytes]:
         """Read data from a chunk"""
         with self.lock:
-            if chunk_handle not in self.chunks:
+            if chunk_id not in self.chunks:
                 return None
             
-            chunk = self.chunks[chunk_handle]
+            chunk = self.chunks[chunk_id]
             end = min(offset + length, len(chunk))
             return bytes(chunk[offset:end])
     

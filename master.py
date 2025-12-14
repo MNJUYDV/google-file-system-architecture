@@ -16,7 +16,7 @@ class GFSMaster:
         
         # Metadata stored in memory
         self.namespace: Dict[str, FileMetadata] = {}  # filename -> FileMetadata
-        self.chunk_metadata: Dict[str, ChunkMetadata] = {}  # chunk_handle -> ChunkMetadata
+        self.chunk_metadata: Dict[str, ChunkMetadata] = {}  # chunk_id -> ChunkMetadata
         self.chunkservers: Dict[str, dict] = {}  # chunkserver_id -> info
         
         # Chunkserver heartbeats
@@ -37,9 +37,9 @@ class GFSMaster:
             self.last_heartbeat[chunkserver_id] = time.time()
             
             # Update chunk locations
-            for chunk_handle in chunks:
-                if chunk_handle in self.chunk_metadata:
-                    self.chunk_metadata[chunk_handle].locations.add(chunkserver_id)
+            for chunk_id in chunks:
+                if chunk_id in self.chunk_metadata:
+                    self.chunk_metadata[chunk_id].locations.add(chunkserver_id)
             
             print(f"[Master] Registered chunkserver: {chunkserver_id}")
     
@@ -60,10 +60,10 @@ class GFSMaster:
     
     def _allocate_chunk(self) -> str:
         """Allocate a new chunk handle"""
-        chunk_handle = hashlib.sha256(
+        chunk_id = hashlib.sha256(
             f"{time.time()}{random.random()}".encode()
         ).hexdigest()[:16]
-        return chunk_handle
+        return chunk_id
     
     def _select_chunkservers(self, count: int) -> List[str]:
         """Select chunkservers for chunk placement"""
@@ -78,15 +78,15 @@ class GFSMaster:
                 return None
             
             # Create new chunk
-            chunk_handle = self._allocate_chunk()
+            chunk_id = self._allocate_chunk()
             locations = self._select_chunkservers(REPLICATION_FACTOR)
             
             if not locations:
                 return None
             
             # Create chunk metadata
-            self.chunk_metadata[chunk_handle] = ChunkMetadata(
-                chunk_handle=chunk_handle,
+            self.chunk_metadata[chunk_id] = ChunkMetadata(
+                chunk_id=chunk_id,
                 version=1,
                 locations=set(locations),
                 primary=locations[0],  # First server becomes primary
@@ -95,13 +95,13 @@ class GFSMaster:
             
             # Add to file
             file_meta = self.namespace[filename]
-            file_meta.chunk_handles.append(chunk_handle)
+            file_meta.chunk_ids.append(chunk_id)
             
-            print(f"[Master] Allocated chunk {chunk_handle} for {filename}")
+            print(f"[Master] Allocated chunk {chunk_id} for {filename}")
             print(f"[Master] Primary: {locations[0]}, Replicas: {locations}")
             
             return {
-                'chunk_handle': chunk_handle,
+                'chunk_id': chunk_id,
                 'locations': locations,
                 'primary': locations[0],
                 'version': 1
@@ -114,14 +114,14 @@ class GFSMaster:
                 return None
             
             file_meta = self.namespace[filename]
-            if chunk_index >= len(file_meta.chunk_handles):
+            if chunk_index >= len(file_meta.chunk_ids):
                 return None
             
-            chunk_handle = file_meta.chunk_handles[chunk_index]
-            chunk_meta = self.chunk_metadata[chunk_handle]
+            chunk_id = file_meta.chunk_ids[chunk_index]
+            chunk_meta = self.chunk_metadata[chunk_id]
             
             return {
-                'chunk_handle': chunk_handle,
+                'chunk_id': chunk_id,
                 'locations': list(chunk_meta.locations),
                 'primary': chunk_meta.primary,
                 'version': chunk_meta.version
@@ -136,7 +136,7 @@ class GFSMaster:
             file_meta = self.namespace[filename]
             return {
                 'filename': filename,
-                'num_chunks': len(file_meta.chunk_handles),
+                'num_chunks': len(file_meta.chunk_ids),
                 'size': file_meta.size
             }
     
