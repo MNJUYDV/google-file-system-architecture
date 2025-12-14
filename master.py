@@ -28,8 +28,8 @@ class GFSMaster:
     
     def start_heartbeat_monitor(self):
         """Start the background thread for monitoring chunkserver health"""
-        self.monitor_thread = threading.Thread(target=self._monitor_chunkservers, daemon=True)
-        self.monitor_thread.start()
+        self.heartbeat_monitor_thread = threading.Thread(target=self._monitor_chunkservers, daemon=True)
+        self.heartbeat_monitor_thread.start()
     
     def register_chunkserver(self, chunkserver_id: str, chunks: List[str]):
         """Register a chunkserver and its chunks"""
