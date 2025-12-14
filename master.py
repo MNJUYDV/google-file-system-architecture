@@ -160,6 +160,6 @@ class GFSMaster:
                     print(f"[Master] Chunkserver {cs_id} appears dead")
                     # In production: trigger re-replication
     
-    def shutdown(self):
-        """Shutdown the master"""
+    def shutdown_heartbeat_monitoring(self):
+        """Shutdown heartbeat monitoring"""
         self.heartbeat_monitoring_active = False

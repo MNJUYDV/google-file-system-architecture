@@ -46,7 +46,7 @@ if __name__ == "__main__":
     
     # Cleanup
     print("\n--- Shutting down ---")
-    master.shutdown()
+    master.shutdown_heartbeat_monitoring()
     cs1.shutdown()
     cs2.shutdown()
     cs3.shutdown()
