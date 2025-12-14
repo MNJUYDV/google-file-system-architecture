@@ -49,7 +49,7 @@ class GFSChunkserver:
             
             chunk = self.chunks[chunk_id]
             
-            # Extend chunk if necessary
+            # Extend chunk if necessary pad the chunk with null bytes 
             if offset > len(chunk):
                 chunk.extend(b'\x00' * (offset - len(chunk)))
             
@@ -57,7 +57,7 @@ class GFSChunkserver:
             if offset == len(chunk):
                 chunk.extend(data)
             else:
-                chunk[offset:offset+len(data)] = data
+                chunk[offset:offset+len(data)] = data #Overwrite the data at the offset
             
             print(f"[{self.chunkserver_id}] Appended {len(data)} bytes to {chunk_id} at offset {offset}")
             return True

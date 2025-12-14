@@ -98,8 +98,8 @@ class GFSMaster:
             )
             
             # Add to file
-            file_meta = self.file_registry[filename]
-            file_meta.chunk_ids.append(chunk_id)
+            file_metadata = self.file_registry[filename]
+            file_metadata.chunk_ids.append(chunk_id)
             
             print(f"[Master] Allocated chunk {chunk_id} for {filename}")
             print(f"[Master] Primary: {locations[0]}, Replicas: {locations}")
@@ -117,18 +117,18 @@ class GFSMaster:
             if filename not in self.file_registry:
                 return None
             
-            file_meta = self.file_registry[filename]
-            if chunk_index >= len(file_meta.chunk_ids):
+            file_metadata = self.file_registry[filename]
+            if chunk_index >= len(file_metadata.chunk_ids):
                 return None
             
-            chunk_id = file_meta.chunk_ids[chunk_index]
-            chunk_meta = self.chunk_metadata[chunk_id]
+            chunk_id = file_metadata.chunk_ids[chunk_index]
+            chunk_metdata= self.chunk_metadata[chunk_id]
             
             return {
                 'chunk_id': chunk_id,
-                'locations': list(chunk_meta.locations),
-                'primary': chunk_meta.primary,
-                'version': chunk_meta.version
+                'locations': list(chunk_metdata.locations),
+                'primary': chunk_metdata.primary,
+                'version': chunk_metdata.version
             }
     
     def get_file_info(self, filename: str) -> Optional[Dict]:
@@ -137,11 +137,11 @@ class GFSMaster:
             if filename not in self.file_registry:
                 return None
             
-            file_meta = self.file_registry[filename]
+            file_metadata = self.file_registry[filename]
             return {
                 'filename': filename,
-                'num_chunks': len(file_meta.chunk_ids),
-                'size': file_meta.size
+                'num_chunks': len(file_metadata.chunk_ids),
+                'size': file_metadata.size
             }
     
     def _monitor_chunkservers(self):
