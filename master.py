@@ -15,15 +15,19 @@ class GFSMaster:
         self.lock = threading.RLock()
         
         # Metadata stored in memory
-        self.namespace: Dict[str, FileMetadata] = {}  # filename -> FileMetadata
+        self.file_registry: Dict[str, FileMetadata] = {}  # filename -> FileMetadata
         self.chunk_metadata: Dict[str, ChunkMetadata] = {}  # chunk_id -> ChunkMetadata
         self.chunkservers: Dict[str, dict] = {}  # chunkserver_id -> info
         
         # Chunkserver heartbeats
         self.last_heartbeat: Dict[str, float] = {}
+        self.running = True
         
         # Start heartbeat monitor
-        self.running = True
+        self.start_heartbeat_monitor()
+    
+    def start_heartbeat_monitor(self):
+        """Start the background thread for monitoring chunkserver health"""
         self.monitor_thread = threading.Thread(target=self._monitor_chunkservers, daemon=True)
         self.monitor_thread.start()
     
@@ -49,12 +53,12 @@ class GFSMaster:
             self.last_heartbeat[chunkserver_id] = time.time()
     
     def create_file(self, filename: str) -> bool:
-        """Create a new file in the namespace"""
+        """Create a new file in the file_registry"""
         with self.lock:
-            if filename in self.namespace:
+            if filename in self.file_registry:
                 return False
             
-            self.namespace[filename] = FileMetadata(filename=filename)
+            self.file_registry[filename] = FileMetadata(filename=filename)
             print(f"[Master] Created file: {filename}")
             return True
     
@@ -74,7 +78,7 @@ class GFSMaster:
     def allocate_chunk_for_append(self, filename: str) -> Optional[Dict]:
         """Allocate a new chunk for append operation"""
         with self.lock:
-            if filename not in self.namespace:
+            if filename not in self.file_registry:
                 return None
             
             # Create new chunk
@@ -94,7 +98,7 @@ class GFSMaster:
             )
             
             # Add to file
-            file_meta = self.namespace[filename]
+            file_meta = self.file_registry[filename]
             file_meta.chunk_ids.append(chunk_id)
             
             print(f"[Master] Allocated chunk {chunk_id} for {filename}")
@@ -110,10 +114,10 @@ class GFSMaster:
     def get_chunk_locations(self, filename: str, chunk_index: int) -> Optional[Dict]:
         """Get locations for a specific chunk of a file"""
         with self.lock:
-            if filename not in self.namespace:
+            if filename not in self.file_registry:
                 return None
             
-            file_meta = self.namespace[filename]
+            file_meta = self.file_registry[filename]
             if chunk_index >= len(file_meta.chunk_ids):
                 return None
             
@@ -130,10 +134,10 @@ class GFSMaster:
     def get_file_info(self, filename: str) -> Optional[Dict]:
         """Get file metadata"""
         with self.lock:
-            if filename not in self.namespace:
+            if filename not in self.file_registry:
                 return None
             
-            file_meta = self.namespace[filename]
+            file_meta = self.file_registry[filename]
             return {
                 'filename': filename,
                 'num_chunks': len(file_meta.chunk_ids),

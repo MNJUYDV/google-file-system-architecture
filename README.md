@@ -15,7 +15,7 @@ This project implements a simplified version of Google's distributed file system
 ### Components
 
 #### Master Server (`master.py`)
-- Manages the namespace (file and directory metadata)
+- Manages the file_registry (file and directory metadata)
 - Tracks chunk locations across chunkservers
 - Allocates chunks and selects replica locations
 - Monitors chunkserver health via heartbeats
@@ -107,7 +107,7 @@ print(data.decode())
 ## File Operations
 
 ### Create File
-Creates a new file in the namespace.
+Creates a new file in the file_registry.
 
 ```python
 client.create("/path/to/file.txt")
@@ -154,7 +154,7 @@ This is a simplified educational implementation. Production GFS would include:
 
 - Persistent storage (currently in-memory)
 - Fault tolerance and recovery mechanisms
-- Snapshot and namespace management
+- Snapshot and file_registry management
 - Concurrent write handling with conflict resolution
 - Network communication layer (currently in-process)
 - Authorization and authentication

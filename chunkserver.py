@@ -13,14 +13,19 @@ class GFSChunkserver:
         self.chunkserver_id = chunkserver_id
         self.master = master
         self.chunks: Dict[str, bytearray] = {}  # chunk_id -> data
-        self.chunk_versions: Dict[str, int] = {}  # chunk_id -> version
         self.lock = threading.RLock()
         
         # Register with master
         self.master.register_chunkserver(self.chunkserver_id, list(self.chunks.keys()))
         
-        # Start heartbeat
+        # Initialize state
         self.running = True
+        
+        # Start heartbeat
+        self.start_heartbeat()
+    
+    def start_heartbeat(self):
+        """Start the background thread for sending heartbeats to master"""
         self.heartbeat_thread = threading.Thread(target=self._send_heartbeats, daemon=True)
         self.heartbeat_thread.start()
     
@@ -34,8 +39,7 @@ class GFSChunkserver:
         """Create a new chunk"""
         with self.lock:
             self.chunks[chunk_id] = bytearray()
-            self.chunk_versions[chunk_id] = version
-            print(f"[{self.chunkserver_id}] Created chunk: {chunk_id}")
+            print(f"[{self.chunkserver_id}] Created chunk: {chunk_id} (version {version})")
     
     def append_data(self, chunk_id: str, data: bytes, offset: int) -> bool:
         """Append data to a chunk at specified offset"""
