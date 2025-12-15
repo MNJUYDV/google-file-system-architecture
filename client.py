@@ -45,13 +45,13 @@ class GFSClient:
         offset = 0  # New chunk starts at 0
         
         # Primary writes data
-        if not primary.append_data(chunk_id, data, offset):
+        if not primary.append_data_to_chunk(chunk_id, data, offset):
             return False
         
         # Replicate to secondaries
         for cs_id in locations:
             if cs_id != primary_id and cs_id in self.chunkservers:
-                self.chunkservers[cs_id].append_data(chunk_id, data, offset)
+                self.chunkservers[cs_id].append_data_to_chunk(chunk_id, data, offset)
         
         print(f"[Client] Successfully appended {len(data)} bytes to {filename}")
         return True
@@ -78,7 +78,7 @@ class GFSClient:
             # Try to read from any replica
             for cs_id in locations:
                 if cs_id in self.chunkservers:
-                    data = self.chunkservers[cs_id].read_data(chunk_id, 0, CHUNK_SIZE)
+                    data = self.chunkservers[cs_id].read_chunk(chunk_id, 0, CHUNK_SIZE)
                     if data:
                         result.extend(data)
                         break

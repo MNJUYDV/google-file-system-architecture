@@ -41,7 +41,7 @@ class GFSChunkserver:
             self.chunks[chunk_id] = bytearray()
             print(f"[{self.chunkserver_id}] Created chunk: {chunk_id} (version {version})")
     
-    def append_data(self, chunk_id: str, data: bytes, offset: int) -> bool:
+    def append_data_to_chunk(self, chunk_id: str, data: bytes, offset: int) -> bool:
         """Append data to a chunk at specified offset"""
         with self.lock:
             if chunk_id not in self.chunks:
@@ -62,7 +62,7 @@ class GFSChunkserver:
             print(f"[{self.chunkserver_id}] Appended {len(data)} bytes to {chunk_id} at offset {offset}")
             return True
     
-    def read_data(self, chunk_id: str, offset: int, length: int) -> Optional[bytes]:
+    def read_chunk(self, chunk_id: str, offset: int, length: int) -> Optional[bytes]:
         """Read data from a chunk"""
         with self.lock:
             if chunk_id not in self.chunks:
